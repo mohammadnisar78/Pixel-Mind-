@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PixelMind AI — Image Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080810;
+    --surface: #0f0f1a;
+    --surface2: #16162a;
+    --border: rgba(255,255,255,0.07);
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --glow: rgba(124,58,237,0.4);
+    --text: #f0f0ff;
+    --muted: #6b7280;
+    --success: #10b981;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+      radial-gradient(ellipse at 20% 20%, rgba(124,58,237,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ===== AUTH SCREENS ===== */
+  #auth-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: var(--bg);
+  }
+
+  #auth-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 30% 30%, rgba(124,58,237,0.2) 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 70%, rgba(6,182,212,0.12) 0%, transparent 60%);
+  }
+
+  .auth-box {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 0 80px rgba(124,58,237,0.15);
+    animation: fadeUp 0.5s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .auth-logo {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .auth-logo .logo-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 14px;
+    box-shadow: 0 0 30px var(--glow);
+  }
+
+  .auth-logo h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff, var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .auth-logo p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 6px;
+  }
+
+  .auth-tabs {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 28px;
+  }
+
+  .auth-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border-radius: 9px;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--muted);
+    transition: all 0.3s;
+    border: none;
+    background: none;
+  }
+
+  .auth-tab.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 0 20px var(--glow);
+  }
+
+  .form-group {
+    margin-bottom: 18px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 13px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  .form-group input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #6d28d9);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 20px var(--glow);
+    letter-spacing: 0.02em;
+    margin-top: 8px;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--glow);
+  }
+
+  .btn-primary:active { transform: translateY(0); }
+
+  .error-msg {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #f87171;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  /* ===== MAIN APP ===== */
+  #app {
+    display: none;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Navbar */
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    background: rgba(8,8,16,0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+  }
+
+  .nav-logo .dot {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 0 15px var(--glow);
+  }
+
+  .nav-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nav-user span {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .nav-user strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .btn-logout {
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .btn-logout:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  /* Main content */
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  .hero-text {
+    text-align: center;
+    margin-bottom: 44px;
+  }
+
+  .hero-text h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 0%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+  }
+
+  .hero-text p {
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  /* Generator card */
+  .gen-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 32px;
+    margin-bottom: 40px;
+  }
+
+  .prompt-area {
+    position: relative;
+    margin-bottom: 24px;
+  }
+
+  .prompt-area textarea {
+    width: 100%;
+    padding: 18px 20px;
+    padding-right: 130px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    resize: none;
+    height: 100px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    line-height: 1.6;
+  }
+
+  .prompt-area textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+  }
+
+  .prompt-area textarea::placeholder { color: var(--muted); }
+
+  .btn-generate {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    padding: 11px 22px;
+    background: linear-gradient(135deg, var(--accent), #6d28d9);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px var(--glow);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .btn-generate:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--glow);
+  }
+
+  .btn-generate:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Options row */
+  .options-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .option-group label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .option-group select {
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    min-width: 140px;
+  }
+
+  .option-group select:focus {
+    border-color: var(--accent);
+  }
+
+  /* Style tags */
+  .style-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .style-tag {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.2s;
+    background: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .style-tag:hover, .style-tag.active {
+    border-color: var(--accent);
+    color: var(--text);
+    background: rgba(124,58,237,0.1);
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: rgba(124,58,237,0.08);
+    border: 1px solid rgba(124,58,237,0.2);
+    border-radius: 12px;
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--accent2);
+  }
+
+  .status-bar.show { display: flex; }
+
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(124,58,237,0.3);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Progress dots */
+  .progress-dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .progress-dots span {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 1.2s ease infinite;
+  }
+
+  .progress-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .progress-dots span:nth-child(3) { animation-delay: 0.4s; }
+  .progress-dots span:nth-child(4) { animation-delay: 0.6s; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* Image grid */
+  #results-section {
+    display: none;
+  }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .results-header h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .btn-download-all {
+    padding: 9px 20px;
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    background: rgba(124,58,237,0.1);
+    color: var(--accent2);
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-download-all:hover {
+    background: rgba(124,58,237,0.2);
+  }
+
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .image-grid { grid-template-columns: 1fr; }
+  }
+
+  .image-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    aspect-ratio: 1;
+    animation: fadeIn 0.5s ease forwards;
+    opacity: 0;
+  }
+
+  .image-card:nth-child(1) { animation-delay: 0.1s; }
+  .image-card:nth-child(2) { animation-delay: 0.2s; }
+  .image-card:nth-child(3) { animation-delay: 0.3s; }
+  .image-card:nth-child(4) { animation-delay: 0.4s; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .image-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .image-skeleton {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .image-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    display: flex;
+    align-items: flex-end;
+    padding: 16px;
+    gap: 8px;
+  }
+
+  .image-card:hover .image-overlay { opacity: 1; }
+
+  .btn-img {
+    flex: 1;
+    padding: 9px;
+    border-radius: 9px;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .btn-download {
+    background: white;
+    color: #111;
+  }
+
+  .btn-download:hover { background: #e0e0e0; }
+
+  .btn-fullscreen {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2) !important;
+  }
+
+  .btn-fullscreen:hover { background: rgba(255,255,255,0.25); }
+
+  .img-number {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 28px;
+    height: 28px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    color: white;
+  }
+
+  /* Lightbox */
+  #lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0,0,0,0.95);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  #lightbox.show { display: flex; }
+
+  #lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 12px;
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+
+  .lightbox-close:hover { background: rgba(255,255,255,0.2); }
+
+  /* History section */
+  .history-section {
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 1px solid var(--border);
+  }
+
+  .history-section h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--muted);
+  }
+
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+  }
+
+  .history-thumb {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .history-thumb:hover {
+    border-color: var(--accent);
+    transform: scale(1.05);
+  }
+
+  .history-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .empty-history {
+    color: var(--muted);
+    font-size: 14px;
+    padding: 10px 0;
+  }
+
+  /* Error state */
+  .error-card {
+    display: none;
+    padding: 20px;
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 14px;
+    color: #f87171;
+    font-size: 14px;
+    margin-top: 16px;
+    line-height: 1.6;
+  }
+
+  .error-card.show { display: block; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--success);
+    border-radius: 12px;
+    color: var(--success);
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 300;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="logo-icon">✦</div>
+      <h1>PixelMind AI</h1>
+      <p>Turn your imagination into stunning images</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+      <button class="auth-tab" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <div id="auth-error" class="error-msg"></div>
+
+    <!-- Login Form -->
+    <div id="login-form">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-pass" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" onclick="login()">Continue →</button>
+    </div>
+
+    <!-- Signup Form -->
+    <div id="signup-form" style="display:none">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="signup-name" placeholder="Your name">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="signup-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signup-pass" placeholder="Min 6 characters">
+      </div>
+      <button class="btn-primary" onclick="signup()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <nav class="navbar">
+    <div class="nav-logo">
+      <div class="dot">✦</div>
+      PixelMind AI
+    </div>
+    <div class="nav-user">
+      <span>Welcome, <strong id="user-name-display"></strong></span>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="hero-text">
+      <h2>Generate Stunning Images with AI</h2>
+      <p>Type your imagination — get 4 beautiful images instantly</p>
+    </div>
+
+    <div class="gen-card">
+      <div class="prompt-area">
+        <textarea id="prompt-input" placeholder="Describe your image... e.g. 'A futuristic city at sunset with flying cars and neon lights'"></textarea>
+        <button class="btn-generate" id="gen-btn" onclick="generateImages()">
+          <span>✦</span> Generate
+        </button>
+      </div>
+
+      <div class="options-row">
+        <div class="option-group">
+          <label>Image Size</label>
+          <select id="size-select">
+            <option value="512x512">512 × 512</option>
+            <option value="768x768">768 × 768</option>
+            <option value="1024x1024" selected>1024 × 1024 (HD)</option>
+            <option value="1024x1792">1024 × 1792 (Portrait)</option>
+            <option value="1792x1024">1792 × 1024 (Landscape)</option>
+          </select>
+        </div>
+        <div class="option-group">
+          <label>Art Style</label>
+          <select id="style-select">
+            <option value="">No style</option>
+            <option value="photorealistic">Photorealistic</option>
+            <option value="digital art">Digital Art</option>
+            <option value="oil painting">Oil Painting</option>
+            <option value="watercolor">Watercolor</option>
+            <option value="anime">Anime</option>
+            <option value="cinematic">Cinematic</option>
+            <option value="3D render">3D Render</option>
+          </select>
+        </div>
+        <div class="option-group">
+          <label>Model</label>
+          <select id="model-select">
+            <option value="flux">FLUX (Best Quality)</option>
+            <option value="sdxl">Stable Diffusion XL</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Quick prompts -->
+      <div class="style-tags">
+        <span style="font-size:12px;color:var(--muted);align-self:center;margin-right:4px;">Quick:</span>
+        <button class="style-tag" onclick="addPrompt('Magical forest with glowing mushrooms')">🌿 Magic Forest</button>
+        <button class="style-tag" onclick="addPrompt('Cyberpunk city at night with rain')">🌆 Cyberpunk</button>
+        <button class="style-tag" onclick="addPrompt('Majestic dragon flying over mountains')">🐉 Dragon</button>
+        <button class="style-tag" onclick="addPrompt('Beautiful galaxy with colorful nebulas')">🌌 Galaxy</button>
+        <button class="style-tag" onclick="addPrompt('Cute robot in a flower garden')">🤖 Robot</button>
+        <button class="style-tag" onclick="addPrompt('Underwater ancient ruins with sunlight rays')">🌊 Underwater</button>
+      </div>
+
+      <div class="status-bar" id="status-bar">
+        <div class="spinner"></div>
+        <span id="status-text">Generating your images...</span>
+        <div class="progress-dots" style="margin-left:auto">
+          <span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <div class="error-card" id="error-card"></div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-section">
+      <div class="results-header">
+        <h3>✦ Generated Images</h3>
+        <button class="btn-download-all" onclick="downloadAll()">⬇ Download All</button>
+      </div>
+      <div class="image-grid" id="image-grid"></div>
+    </div>
+
+    <!-- History -->
+    <div class="history-section">
+      <h3>Recent Generations</h3>
+      <div class="history-grid" id="history-grid">
+        <p class="empty-history">Your generated images will appear here...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="Preview">
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">✓ <span id="toast-msg"></span></div>
+
+<script>
+// ===== USER STORAGE =====
+let users = JSON.parse(localStorage.getItem('pm_users') || '{}');
+let currentUser = JSON.parse(localStorage.getItem('pm_current') || 'null');
+let generatedImages = [];
+let history = [];
+
+// ===== AUTH =====
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => {
+    t.classList.toggle('active', (tab==='login'&&i===0)||(tab==='signup'&&i===1));
+  });
+  document.getElementById('login-form').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('signup-form').style.display = tab==='signup' ? 'block' : 'none';
+  hideError();
+}
+
+function showError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideError() {
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+function login() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  if (!email || !pass) return showError('Please fill all fields.');
+  const user = users[email];
+  if (!user || user.password !== pass) return showError('Invalid email or password.');
+  currentUser = { email, name: user.name };
+  localStorage.setItem('pm_current', JSON.stringify(currentUser));
+  enterApp();
+}
+
+function signup() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pass = document.getElementById('signup-pass').value;
+  if (!name || !email || !pass) return showError('Please fill all fields.');
+  if (pass.length < 6) return showError('Password must be at least 6 characters.');
+  if (users[email]) return showError('Email already registered.');
+  users[email] = { name, password: pass };
+  localStorage.setItem('pm_users', JSON.stringify(users));
+  currentUser = { email, name };
+  localStorage.setItem('pm_current', JSON.stringify(currentUser));
+  enterApp();
+}
+
+function logout() {
+  localStorage.removeItem('pm_current');
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('results-section').style.display = 'none';
+}
+
+function enterApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('user-name-display').textContent = currentUser.name;
+}
+
+// Auto login
+if (currentUser) enterApp();
+
+// ===== IMAGE GENERATION =====
+async function generateImages() {
+  const prompt = document.getElementById('prompt-input').value.trim();
+  if (!prompt) return showToast('Please enter a prompt!');
+
+  const style = document.getElementById('style-select').value;
+  const model = document.getElementById('model-select').value;
+  const sizeVal = document.getElementById('size-select').value;
+  const [w, h] = sizeVal.split('x').map(Number);
+
+  const finalPrompt = style ? `${prompt}, ${style} style, high quality, detailed` : `${prompt}, high quality, detailed`;
+
+  // UI states
+  document.getElementById('gen-btn').disabled = true;
+  document.getElementById('gen-btn').innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px"></div> Generating...';
+  document.getElementById('status-bar').classList.add('show');
+  document.getElementById('error-card').classList.remove('show');
+  document.getElementById('results-section').style.display = 'block';
+
+  // Show skeleton grid
+  const grid = document.getElementById('image-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    grid.innerHTML += `
+      <div class="image-card" style="opacity:1">
+        <div class="image-skeleton">
+          <div class="spinner" style="width:30px;height:30px;border-width:3px"></div>
+          <span>Generating ${i+1}/4...</span>
+        </div>
+      </div>`;
+  }
+
+  generatedImages = [];
+  const statuses = [
+    'Initializing AI model...', 'Processing your prompt...', 
+    'Rendering details...', 'Applying final touches...'
+  ];
+  let si = 0;
+  const statusInterval = setInterval(() => {
+    document.getElementById('status-text').textContent = statuses[si % statuses.length];
+    si++;
+  }, 2000);
+
+  // Generate 4 images
+  const seeds = [Math.random()*1e9|0, Math.random()*1e9|0, Math.random()*1e9|0, Math.random()*1e9|0];
+  
+  try {
+    const promises = seeds.map((seed, idx) => generateOne(finalPrompt, w, h, model, seed, idx));
+    const results = await Promise.allSettled(promises);
+    clearInterval(statusInterval);
+
+    generatedImages = results
+      .filter(r => r.status === 'fulfilled' && r.value)
+      .map(r => r.value);
+
+    if (generatedImages.length > 0) {
+      showToast(`${generatedImages.length} images generated! ✦`);
+    } else {
+      throw new Error('All generations failed. Please retry.');
+    }
+
+  } catch (err) {
+    clearInterval(statusInterval);
+    document.getElementById('error-card').innerHTML = `
+      <strong>Generation failed.</strong> The free API may be temporarily busy. Please try again in a moment.<br>
+      <small style="opacity:0.7;margin-top:4px;display:block">Error: ${err.message}</small>`;
+    document.getElementById('error-card').classList.add('show');
+    document.getElementById('results-section').style.display = 'none';
+  }
+
+  document.getElementById('gen-btn').disabled = false;
+  document.getElementById('gen-btn').innerHTML = '<span>✦</span> Generate';
+  document.getElementById('status-bar').classList.remove('show');
+}
+
+async function generateOne(prompt, width, height, model, seed, idx) {
+  const encodedPrompt = encodeURIComponent(prompt);
+  // Pollinations.ai - 100% free, no API key, direct image URL
+  const modelName = model === 'flux' ? 'flux' : 'stable-diffusion-xl-base-1.0';
+  const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&model=${modelName}&nologo=true&enhance=true`;
+
+  return new Promise((resolve, reject) => {
+    const imgEl = document.createElement('img');
+    imgEl.crossOrigin = 'anonymous';
+
+    imgEl.onload = () => {
+      // Replace skeleton card with real image
+      const cards = document.querySelectorAll('.image-card');
+      if (cards[idx]) {
+        cards[idx].innerHTML = `
+          <span class="img-number">${idx+1}</span>
+          <img src="${url}" alt="Generated ${idx+1}" crossorigin="anonymous">
+          <div class="image-overlay">
+            <button class="btn-img btn-download" onclick="downloadImage('${url}', ${idx+1})">⬇ Download</button>
+            <button class="btn-img btn-fullscreen" onclick="openLightbox('${url}')">⛶ View</button>
+          </div>`;
+      }
+      addToHistory(url);
+      resolve(url);
+    };
+
+    imgEl.onerror = () => {
+      // Fallback: just set src directly in card and resolve anyway
+      const cards = document.querySelectorAll('.image-card');
+      if (cards[idx]) {
+        cards[idx].innerHTML = `
+          <span class="img-number">${idx+1}</span>
+          <img src="${url}" alt="Generated ${idx+1}" style="width:100%;height:100%;object-fit:cover">
+          <div class="image-overlay">
+            <button class="btn-img btn-download" onclick="downloadImage('${url}', ${idx+1})">⬇ Download</button>
+            <button class="btn-img btn-fullscreen" onclick="openLightbox('${url}')">⛶ View</button>
+          </div>`;
+      }
+      addToHistory(url);
+      resolve(url); // resolve anyway so grid shows
+    };
+
+    imgEl.src = url;
+    setTimeout(() => {
+      // Timeout fallback — still show the image URL in the card
+      const cards = document.querySelectorAll('.image-card');
+      if (cards[idx] && cards[idx].querySelector('.image-skeleton')) {
+        cards[idx].innerHTML = `
+          <span class="img-number">${idx+1}</span>
+          <img src="${url}" alt="Generated ${idx+1}" style="width:100%;height:100%;object-fit:cover">
+          <div class="image-overlay">
+            <button class="btn-img btn-download" onclick="downloadImage('${url}', ${idx+1})">⬇ Download</button>
+            <button class="btn-img btn-fullscreen" onclick="openLightbox('${url}')">⛶ View</button>
+          </div>`;
+        addToHistory(url);
+      }
+      resolve(url);
+    }, 60000);
+  });
+}
+
+// ===== DOWNLOAD =====
+async function downloadImage(url, num) {
+  try {
+    showToast('Downloading image...');
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `pixelmind-image-${num}.png`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Image downloaded!');
+  } catch {
+    // Fallback
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pixelmind-image-${num}.png`;
+    a.target = '_blank';
+    a.click();
+  }
+}
+
+async function downloadAll() {
+  if (generatedImages.length === 0) return showToast('No images to download!');
+  showToast('Downloading all images...');
+  for (let i = 0; i < generatedImages.length; i++) {
+    await new Promise(r => setTimeout(r, 400));
+    await downloadImage(generatedImages[i], i+1);
+  }
+}
+
+// ===== LIGHTBOX =====
+function openLightbox(url) {
+  document.getElementById('lightbox-img').src = url;
+  document.getElementById('lightbox').classList.add('show');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('show');
+}
+
+// ===== HISTORY =====
+function addToHistory(url) {
+  history.unshift(url);
+  if (history.length > 20) history = history.slice(0, 20);
+  renderHistory();
+}
+
+function renderHistory() {
+  const grid = document.getElementById('history-grid');
+  if (history.length === 0) {
+    grid.innerHTML = '<p class="empty-history">Your generated images will appear here...</p>';
+    return;
+  }
+  grid.innerHTML = history.map(url => `
+    <div class="history-thumb" onclick="openLightbox('${url}')">
+      <img src="${url}" alt="History" loading="lazy">
+    </div>`).join('');
+}
+
+// ===== UTILS =====
+function addPrompt(text) {
+  document.getElementById('prompt-input').value = text;
+  document.getElementById('prompt-input').focus();
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Enter key to generate
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'Enter') generateImages();
+});
+</script>
+</body>
+</html>
